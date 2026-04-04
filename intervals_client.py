@@ -9,7 +9,7 @@ BASE_URL = "https://intervals.icu/api/v1"
 
 # Simple TTL cache: { window: (timestamp, data) }
 _cache = {}
-CACHE_TTL = 900  # 15 minutes
+CACHE_TTL = 3600  # 1 hour
 
 
 def _auth():
