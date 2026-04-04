@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASK CLAUDE — Training Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -93,7 +94,6 @@
             border-radius: 12px;
             line-height: 1.6;
             font-size: 14px;
-            white-space: pre-wrap;
             word-wrap: break-word;
         }
 
@@ -164,6 +164,54 @@
         .message .content pre code {
             background: none;
             padding: 0;
+        }
+
+        .message .content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .message .content th,
+        .message .content td {
+            border: 1px solid #2a2a4a;
+            padding: 6px 12px;
+            text-align: left;
+        }
+
+        .message .content th {
+            background: #16213e;
+            color: #c4a7ff;
+            font-weight: 600;
+        }
+
+        .message .content tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .message .content h1,
+        .message .content h2,
+        .message .content h3 {
+            color: #c4a7ff;
+            margin: 12px 0 6px;
+            font-size: 15px;
+        }
+
+        .message .content h1 { font-size: 17px; }
+        .message .content h2 { font-size: 16px; }
+
+        .message .content blockquote {
+            border-left: 3px solid #c4a7ff;
+            padding-left: 12px;
+            color: #999;
+            margin: 8px 0;
+        }
+
+        .message .content hr {
+            border: none;
+            border-top: 1px solid #2a2a4a;
+            margin: 12px 0;
         }
 
         .welcome {
@@ -320,8 +368,7 @@
 <body>
     <header>
         <div class="logo">
-            <h1>ASK CLAUDE</h1>
-            <span>Training Analysis</span>
+            <h1>Intervals.icu Training Analysis</h1>
         </div>
         <div class="window-selector">
             <label>Data window:</label>
@@ -362,10 +409,6 @@
         </div>
     </div>
 
-    <div class="status-bar">
-        Connected to Intervals.icu · Powered by Claude
-    </div>
-
     <script>
         const chatEl = document.getElementById('chat');
         const inputEl = document.getElementById('input');
@@ -402,42 +445,11 @@
             return div;
         }
 
+        // Configure marked
+        marked.setOptions({ breaks: true, gfm: true });
+
         function formatContent(text) {
-            // Convert markdown-style formatting to HTML
-            let html = text;
-
-            // Code blocks
-            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-
-            // Inline code
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-            // Bold
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-            // Italic
-            html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-
-            // Headers
-            html = html.replace(/^### (.+)$/gm, '<strong>$1</strong>');
-            html = html.replace(/^## (.+)$/gm, '<strong>$1</strong>');
-            html = html.replace(/^# (.+)$/gm, '<strong>$1</strong>');
-
-            // Bullet lists
-            html = html.replace(/^[•\-\*] (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-
-            // Numbered lists
-            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-            // Paragraphs (double newlines)
-            html = html.replace(/\n\n/g, '</p><p>');
-            html = '<p>' + html + '</p>';
-
-            // Single newlines within paragraphs
-            html = html.replace(/(?<!<\/li>|<\/ul>|<\/pre>|<\/p>|<ul>)\n(?!<)/g, '<br>');
-
-            return html;
+            return marked.parse(text);
         }
 
         function showLoading() {
