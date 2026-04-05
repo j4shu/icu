@@ -73,19 +73,17 @@ WINDOW_CHOICES = [
 
 def respond(message, history, window):
     """Stream a response from Claude with Intervals.icu data context."""
-    # Fetch training data
-    try:
-        summary = build_training_summary(window)
-    except Exception as e:
-        yield f"**Error fetching Intervals.icu data:** {e}"
-        return
-
     # Build Claude messages — inject data context only on first turn
     messages = []
     for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
 
     if not history:
+        try:
+            summary = build_training_summary(window)
+        except Exception as e:
+            yield f"**Error fetching Intervals.icu data:** {e}"
+            return
         data_context = (
             f"Here is the athlete's training data for the last {window} window:\n\n"
             f"```json\n{json.dumps(summary, indent=2, default=str)}\n```\n\n"
