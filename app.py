@@ -88,6 +88,17 @@ def respond(message, history, window):
             f"Here is the athlete's training data for the last {window} window:\n\n"
             f"```json\n{json.dumps(summary, indent=2, default=str)}\n```\n\n"
         )
+        # reference training plan if it exists
+        training_plan_path = CONVERSATIONS_DIR / "training_plan.txt"
+        if training_plan_path.exists():
+            plan_text = training_plan_path.read_text().strip()
+            data_context += (
+                f"Here is the athlete's current training plan. Use this as a reference "
+                f"to check whether their recent activity data lines up with what was "
+                f"prescribed:\n\n```\n{plan_text}\n```\n\n"
+                f"When making changes or recommendations, output the workouts in the "
+                f"same format as the training plan for consistency and clarity.\n\n"
+            )
         full_message = f"{data_context}Athlete's question: {message}"
     else:
         full_message = message
