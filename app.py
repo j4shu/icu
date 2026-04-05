@@ -1,5 +1,4 @@
-import json
-import os
+from json import dumps
 from datetime import datetime
 from pathlib import Path
 
@@ -86,7 +85,7 @@ def respond(message, history, window):
             return
         data_context = (
             f"Here is the athlete's training data for the last {window} window:\n\n"
-            f"```json\n{json.dumps(summary, indent=2, default=str)}\n```\n\n"
+            f"```json\n{dumps(summary, indent=2, default=str)}\n```\n\n"
         )
         # reference training plan if it exists
         training_plan_path = CONVERSATIONS_DIR / "training_plan.txt"
