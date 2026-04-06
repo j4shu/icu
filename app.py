@@ -29,35 +29,21 @@ Keep responses focused and conversational — this is a chat, not a report.
 If the data is insufficient to answer a question, say so and explain what additional data would help."""
 
 
-def save_conversation(history, last_user_msg, last_reply, window):
-    """Auto-save the full conversation to a markdown file in conversations/."""
-    all_msgs = list(history) + [
-        {"role": "user", "content": last_user_msg},
-        {"role": "assistant", "content": last_reply},
-    ]
-    # Use a stable filename based on the first message timestamp
-    # so follow-up messages update the same file
-    if len(all_msgs) <= 2:
-        # New conversation — create a new file
-        ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        filename = f"chat_{ts}.md"
-    else:
-        # Continuing conversation — find the most recent file and overwrite
-        existing = sorted(CONVERSATIONS_DIR.glob("chat_*.md"))
-        filename = (
-            existing[-1].name
-            if existing
-            else f"chat_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.md"
-        )
-
+def export_conversation(history, window):
+    """Export the conversation to a markdown file in conversations/."""
+    if not history:
+        gr.Info("No conversation to export.")
+        return
+    ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    filename = f"chat_{ts}.md"
     md = f"# Training Analysis Conversation\n"
     md += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
     md += f"**Data window:** {window}\n\n---\n\n"
-    for msg in all_msgs:
+    for msg in history:
         label = "## You" if msg["role"] == "user" else "## Claude"
         md += f"{label}\n\n{msg['content']}\n\n"
-
     (CONVERSATIONS_DIR / filename).write_text(md)
+    gr.Info(f"Conversation exported to {filename}")
 
 
 WINDOW_CHOICES = [
@@ -117,9 +103,6 @@ def respond(message, history, window):
             reply += text
             yield reply
 
-    # Auto-save conversation
-    save_conversation(history, message, reply, window)
-
 
 EXAMPLES = [
     ["Create a training plan up until my next race based on my recent training data."],
@@ -142,18 +125,21 @@ with gr.Blocks(
         label="Data Window",
     )
 
+    chatbot = gr.Chatbot(height="75vh", show_label=False, resizable=True)
     gr.ChatInterface(
         fn=respond,
+        chatbot=chatbot,
         additional_inputs=[window],
         examples=EXAMPLES,
     )
+
+    export_btn = gr.Button("Export", variant="primary", size="md", scale=0)
+    export_btn.click(fn=export_conversation, inputs=[chatbot, window])
 
 if __name__ == "__main__":
     app.launch(
         server_port=5050,
         theme=gr.themes.Glass(
-            spacing_size="lg",
-            text_size="lg",
             font=[gr.themes.GoogleFont("MesloLGM Nerd Font")],
         ),
     )
