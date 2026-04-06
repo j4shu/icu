@@ -1,3 +1,5 @@
+<img width="1470" height="923" alt="SCR-20260406-pupr" src="https://github.com/user-attachments/assets/756661fb-339f-48e0-91d8-9e494dd0acb8" />
+
 # triclops
 
 An AI triathlon coach powered by Claude and [Intervals.icu](https://intervals.icu).
