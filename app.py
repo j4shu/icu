@@ -126,11 +126,13 @@ with gr.Blocks(
     )
 
     chatbot = gr.Chatbot(height="75vh", show_label=False, resizable=True)
+    textbox = gr.Textbox()
     gr.ChatInterface(
         fn=respond,
-        chatbot=chatbot,
         additional_inputs=[window],
         examples=EXAMPLES,
+        chatbot=chatbot,
+        textbox=textbox,
     )
 
     export_btn = gr.Button("Export", variant="primary", size="md", scale=0)
