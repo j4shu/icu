@@ -1,6 +1,10 @@
+from json import load
+from pathlib import Path
 from time import time
+
 from helpers import *
 
+ATHLETE_FILE = Path(".athlete")
 
 # Simple TTL cache: { past: (timestamp, data) }
 _cache = {}
@@ -83,13 +87,12 @@ def get_wellness(past, raw=False):
 
 
 def get_athlete():
-    return {
-        "name": "Jason",
-        "sex": "M",
-        "weight": "150lbs",
-        "age": 26,
-        "height": "5ft7in",
-    }
+    if not ATHLETE_FILE.exists():
+        raise FileNotFoundError(
+            "Missing .athlete file. Copy .athlete.example to .athlete and fill it in."
+        )
+    with open(ATHLETE_FILE) as f:
+        return load(f)
 
 
 def get_events(past="6mo", future="6mo", raw=False):

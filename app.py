@@ -14,6 +14,7 @@ client = anthropic.Anthropic()
 
 CONVERSATIONS_DIR = Path("conversations")
 CONVERSATIONS_DIR.mkdir(exist_ok=True)
+TRAINING_PLAN_FILE = Path("training_plan.txt")
 
 SYSTEM_PROMPT = """You are an expert triathlon coach and sports scientist analyzing an age-group triathlete's training data from Intervals.icu. You have deep knowledge of:
 - Periodization and training load management (CTL/ATL/TSB)
@@ -86,9 +87,8 @@ def respond(message, history, window):
             f"```json\n{dumps(summary, indent=2, default=str)}\n```\n\n"
         )
         # reference training plan if it exists
-        training_plan_path = CONVERSATIONS_DIR / "training_plan.txt"
-        if training_plan_path.exists():
-            plan_text = training_plan_path.read_text().strip()
+        if TRAINING_PLAN_FILE.exists():
+            plan_text = TRAINING_PLAN_FILE.read_text().strip()
             data_context += (
                 f"Here is the athlete's current training plan. Use this as a reference "
                 f"to check whether their recent activity data lines up with what was "
