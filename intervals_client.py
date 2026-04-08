@@ -17,16 +17,17 @@ def get_activities(past, raw=False):
             "date": a.get("start_date_local", "")[:10],
             "type": a.get("type"),
             "name": a.get("name"),
+            "is_race": a.get("sub_type"),
             # Duration & distance
             "duration": a.get("moving_time", a.get("elapsed_time")),
             "distance": a.get("distance"),
             # Training load & fitness
             "training_load": a.get("icu_training_load"),
             "intensity": a.get("icu_intensity"),
-            "atl": a.get("icu_atl"),
-            "ctl": a.get("icu_ctl"),
-            "trimp": a.get("trimp"),
-            "joules": a.get("joules"),
+            "ctl": round(a.get("icu_ctl"), 2),
+            "atl": round(a.get("icu_atl"), 2),
+            "tsb": round(a.get("icu_ctl") - a.get("icu_atl"), 2),
+            "trimp": round(a.get("trimp"), 2),
             # Heart rate
             "average_heartrate": a.get("average_heartrate"),
             "max_heartrate": a.get("max_heartrate"),
@@ -43,6 +44,7 @@ def get_activities(past, raw=False):
             "polarization_index": a.get("polarization_index"),
             "strain_score": a.get("strain_score"),
             "power_hr_ratio": a.get("icu_power_hr"),
+            "work": a.get("icu_joules"),
             # Pace & form
             "average_speed": a.get("average_speed"),
             "average_cadence": a.get("average_cadence"),
@@ -57,6 +59,7 @@ def get_activities(past, raw=False):
     for d in data:
         d["duration"] = seconds_to_hhmmss(d.get("duration"))
         type = d.get("type")
+        # activity specific fields
         if type == "Swim":
             d["distance"] = meters_to_yards(d.get("distance"))
             d["average_speed"] = mps_to_min_per_100yds(d.get("average_speed"))
@@ -71,7 +74,11 @@ def get_activities(past, raw=False):
                 d["distance"] = meters_to_miles(d.get("distance"))
             if d.get("average_speed"):
                 d["average_speed"] = mps_to_mph(d.get("average_speed"))
-
+        # misc fields
+        if d.get("work"):
+            d["work"] = f"{round(d.get('work') / 1000, 2)}kJ"
+        if d.get("is_race") == "RACE":
+            d["is_race"] = True
     data.sort(key=lambda x: x.get("date"), reverse=True)
     return data
 
@@ -84,9 +91,10 @@ def get_wellness(past, raw=False):
     data = [
         {
             "date": w.get("id"),
-            "ctl": w.get("ctl"),
-            "atl": w.get("atl"),
-            "ramp_rate": w.get("rampRate"),
+            "ctl": round(w.get("ctl"), 2),
+            "atl": round(w.get("atl"), 2),
+            "tsb": round(w.get("ctl") - w.get("atl"), 2),
+            "ramp_rate": round(w.get("rampRate"), 2),
             "resting_hr": w.get("restingHR"),
             "hrv": w.get("hrv"),
             "sleep_hours": w.get("sleepSecs"),
