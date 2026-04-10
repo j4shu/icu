@@ -92,7 +92,7 @@ def get_activities(past, raw=False):
                 if i.get("distance"):
                     interval["distance"] = meters_to_yards(i.get("distance"))
                 if i.get("elapsed_time"):
-                    interval["duration"] = (seconds_to_hhmmss(i.get("elapsed_time")),)
+                    interval["duration"] = seconds_to_hhmmss(i.get("elapsed_time"))
                 if i.get("zone"):
                     interval["zone"] = i.get("zone")
                 if i.get("average_speed"):
@@ -110,7 +110,7 @@ def get_activities(past, raw=False):
                 if i.get("distance"):
                     interval["distance"] = meters_to_miles(i.get("distance"))
                 if i.get("elapsed_time"):
-                    interval["duration"] = (seconds_to_hhmmss(i.get("elapsed_time")),)
+                    interval["duration"] = seconds_to_hhmmss(i.get("elapsed_time"))
                 if i.get("zone"):
                     interval["zone"] = i.get("zone")
                 if i.get("average_speed"):
@@ -131,16 +131,20 @@ def get_activities(past, raw=False):
                 interval = {}
                 if i.get("distance"):
                     interval["distance"] = meters_to_miles(i.get("distance"))
-                if i.get("duration"):
+                if i.get("elapsed_time"):
                     interval["duration"] = seconds_to_hhmmss(i.get("elapsed_time"))
                 if i.get("average_watts"):
                     interval["average_watts"] = i.get("average_watts")
+                # if i.get("weighted_average_watts"):
+                # interval["normalized_power"] = i.get("weighted_average_watts")
                 if i.get("zone"):
                     interval["zone"] = i.get("zone")
                 if i.get("average_speed"):
                     interval["average_speed"] = mps_to_mph(i.get("average_speed"))
                 if i.get("average_heartrate"):
                     interval["average_heartrate"] = i.get("average_heartrate")
+                if i.get("type"):
+                    interval["type"] = i.get("type")
                 new_interval_details.append(interval)
         else:
             # WeightTraining, Elliptical, etc.
