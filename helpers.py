@@ -9,8 +9,8 @@ BASE_URL = "https://intervals.icu/api/v1"
 
 def api_get_athlete(path, params=None):
     auth = HTTPBasicAuth("API_KEY", environ["INTERVALS_API_KEY"])
-    athlete_id = environ["INTERVALS_ATHLETE_ID"]
-    url = f"{BASE_URL}/athlete/{athlete_id}/{path}"
+    # using athlete=0 will use the athlete for the API key or bearer token used to make the call
+    url = f"{BASE_URL}/athlete/0/{path}"
     resp = get(url, params=params, auth=auth, timeout=30)
     resp.raise_for_status()
     return resp.json()

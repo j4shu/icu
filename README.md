@@ -20,11 +20,10 @@ Copy the example and fill in your keys:
 cp .env.example .env
 ```
 
-| Variable               | Description                                               |
-| ---------------------- | --------------------------------------------------------- |
-| `INTERVALS_ATHLETE_ID` | Your Intervals.icu athlete ID (found in your profile URL) |
-| `INTERVALS_API_KEY`    | Intervals.icu API key (Settings > Developer)              |
-| `ANTHROPIC_API_KEY`    | Anthropic API key                                         |
+| Variable            | Description                                  |
+| ------------------- | -------------------------------------------- |
+| `INTERVALS_API_KEY` | Intervals.icu API key (Settings > Developer) |
+| `ANTHROPIC_API_KEY` | Anthropic API key                            |
 
 ### Athlete profile
 
