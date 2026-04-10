@@ -4,4 +4,4 @@ __pycache__/
 *.pyc
 conversations/
 .athlete
-training_plan.txt
+training_plan.md

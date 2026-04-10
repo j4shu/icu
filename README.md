@@ -45,4 +45,4 @@ The app will be available at `http://localhost:5050`.
 
 - By default, the app uses a 42-day window of activity and wellness data from your Intervals.icu to use as context for its responses. It also has access to upcoming races within the next 6 months.
 - Conversations are not persisted because the app is intended for periodic check-ins. This allows it to always provide advice based on your most recent data. However, the "Export" button will save the current conversation under `conversations/` as a markdown file.
-- If `training_plan.txt` exists, it will be used as additional context for responses.
+- If `training_plan.md` exists, it will be used as additional context for responses.

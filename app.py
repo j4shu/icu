@@ -14,7 +14,7 @@ client = anthropic.Anthropic()
 
 CONVERSATIONS_DIR = Path("conversations")
 CONVERSATIONS_DIR.mkdir(exist_ok=True)
-TRAINING_PLAN_FILE = Path("training_plan.txt")
+TRAINING_PLAN_FILE = Path("training_plan.md")
 
 SYSTEM_PROMPT = """You are an expert triathlon coach and sports scientist analyzing an age-group triathlete's training data from Intervals.icu. You have deep knowledge of:
 - Periodization and training load management (CTL/ATL/TSB)
