@@ -253,11 +253,16 @@ def build_training_summary(past, force=False):
 
         # prune cache to the last 365 days to prevent unbounded growth
         cutoff = get_date_bounds(365)[0]
+        # sort is only for cosmetic reasons to keep the most recent data at the top of the file
         cache = {d: v for d, v in sorted(cache.items(), reverse=True) if d >= cutoff}
         _save_cache(cache)
 
-    # Return only dates in the requested window
-    combined = {date: cache[date] for date in requested_dates if date in cache}
+    # Return only dates in the requested window, sorted from newest to oldest
+    combined = {
+        date: cache[date]
+        for date in sorted(cache, reverse=True)
+        if date in requested_dates
+    }
 
     return {
         "past_days": past,
