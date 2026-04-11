@@ -204,7 +204,7 @@ def get_athlete():
 
 def get_events():
     oldest, newest = get_date_bounds(past=180, future=180)
-    ret = api_get_athlete("events", params={"oldest": oldest, "newest": newest})
+    response = api_get_athlete("events", params={"oldest": oldest, "newest": newest})
     # filter for races only
     data = [
         {
@@ -214,7 +214,7 @@ def get_events():
             "type": (e.get("type") if e.get("type") != "Other" else "Triathlon"),
             "description": e.get("description"),
         }
-        for e in ret
+        for e in response
         if e.get("category").startswith("RACE")
     ]
     data.sort(key=lambda x: x.get("date"))
