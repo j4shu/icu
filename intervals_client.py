@@ -56,13 +56,14 @@ def get_activities(oldest, newest):
             "average_watts": a.get("icu_average_watts"),
             "normalized_power": a.get("icu_weighted_avg_watts"),
             "athlete_ftp": a.get("icu_ftp"),
-            "time_in_zones": a.get("icu_zone_times"),
+            # "time_in_zones": a.get("icu_zone_times"),
             "decoupling": a.get("decoupling"),
             "efficiency_factor": a.get("icu_efficiency_factor"),
             "strain_score": a.get("strain_score"),
             "work": a.get("icu_joules"),
             # Pace & form
             "average_speed": a.get("average_speed"),
+            "grade_adjusted_speed": a.get("gap"),
             "average_cadence": a.get("average_cadence"),
             # Workout structure
             "interval_summary": a.get("interval_summary"),
@@ -77,10 +78,11 @@ def get_activities(oldest, newest):
             activity_data["interval_summary"] = parse_swim_interval_summary(
                 activity_data.get("interval_summary")
             )
-        elif type == "Run":
+        elif type in ["Run", "VirtualRun"]:
             activity_data["average_speed"] = mps_to_min_per_mile(
                 activity_data.get("average_speed")
             )
+            activity_data["grade_adjusted_speed"] = mps_to_min_per_mile(a.get("gap"))
         elif type in ["VirtualRide", "Ride"]:
             activity_data["distance"] = meters_to_miles(activity_data.get("distance"))
             activity_data["average_speed"] = mps_to_mph(
@@ -130,9 +132,9 @@ def get_activities(oldest, newest):
                         new_interval["average_speed"] = mps_to_min_per_mile(
                             i.get("average_speed")
                         )
-                    if i.get("grade_adjusted_speed"):
+                    if i.get("gap"):
                         new_interval["grade_adjusted_speed"] = mps_to_min_per_mile(
-                            i.get("grade_adjusted_speed")
+                            i.get("gap")
                         )
                     if i.get("average_heartrate"):
                         new_interval["average_heartrate"] = i.get("average_heartrate")
