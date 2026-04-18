@@ -36,7 +36,7 @@ def get_activities(oldest, newest):
             # Identity
             "type": a.get("type"),
             "name": a.get("name"),
-            "is_race": a.get("sub_type"),
+            "race": a.get("race"),
             # Duration & distance
             "duration": seconds_to_hhmmss(a.get("moving_time", a.get("elapsed_time"))),
             "distance": a.get("distance"),
@@ -60,7 +60,6 @@ def get_activities(oldest, newest):
             "decoupling": a.get("decoupling"),
             "efficiency_factor": a.get("icu_efficiency_factor"),
             "strain_score": a.get("strain_score"),
-            "work": a.get("icu_joules"),
             # Pace & form
             "average_speed": a.get("average_speed"),
             "grade_adjusted_speed": a.get("gap"),
@@ -68,9 +67,10 @@ def get_activities(oldest, newest):
             # Workout structure
             "interval_summary": a.get("interval_summary"),
         }
+
         # process activity specific fields
         type = activity_data["type"]
-        if type == "Swim":
+        if type in ["Swim", "OpenWaterSwim"]:
             activity_data["distance"] = meters_to_yards(activity_data.get("distance"))
             activity_data["average_speed"] = mps_to_min_per_100yds(
                 activity_data.get("average_speed")
@@ -83,89 +83,104 @@ def get_activities(oldest, newest):
                 activity_data.get("average_speed")
             )
             activity_data["grade_adjusted_speed"] = mps_to_min_per_mile(a.get("gap"))
+            activity_data["distance"] = meters_to_miles(activity_data.get("distance"))
         elif type in ["VirtualRide", "Ride"]:
             activity_data["distance"] = meters_to_miles(activity_data.get("distance"))
             activity_data["average_speed"] = mps_to_mph(
                 activity_data.get("average_speed")
             )
-            # activity_data["work"] = f"{round(activity_data.get('work') / 1000, 2)}kJ"
-        # misc fields
-        if activity_data.get("is_race") == "RACE":
-            activity_data["is_race"] = True
 
-        # process intervals data
-        interval_details = api_get_activity_intervals(a.get("id")).get("icu_intervals")
-        if interval_details:
-            new_interval_details = []
-            if type == "Swim":
-                for i in interval_details:
-                    new_interval = {}
-                    if i.get("distance"):
-                        new_interval["distance"] = meters_to_yards(i.get("distance"))
-                    if i.get("elapsed_time"):
-                        new_interval["duration"] = seconds_to_hhmmss(
-                            i.get("elapsed_time")
-                        )
-                    if i.get("zone"):
-                        new_interval["zone"] = i.get("zone")
-                    if i.get("average_speed"):
-                        new_interval["average_speed"] = mps_to_min_per_100yds(
-                            i.get("average_speed")
-                        )
-                    if i.get("average_heartrate"):
-                        new_interval["average_heartrate"] = i.get("average_heartrate")
-                    if i.get("type"):
-                        new_interval["type"] = i.get("type")
-                    new_interval_details.append(new_interval)
-            elif type in ["Run", "VirtualRun"]:
-                for i in interval_details:
-                    new_interval = {}
-                    if i.get("distance"):
-                        new_interval["distance"] = meters_to_miles(i.get("distance"))
-                    if i.get("elapsed_time"):
-                        new_interval["duration"] = seconds_to_hhmmss(
-                            i.get("elapsed_time")
-                        )
-                    if i.get("zone"):
-                        new_interval["zone"] = i.get("zone")
-                    if i.get("average_speed"):
-                        new_interval["average_speed"] = mps_to_min_per_mile(
-                            i.get("average_speed")
-                        )
-                    if i.get("gap"):
-                        new_interval["grade_adjusted_speed"] = mps_to_min_per_mile(
-                            i.get("gap")
-                        )
-                    if i.get("average_heartrate"):
-                        new_interval["average_heartrate"] = i.get("average_heartrate")
-                    if i.get("type"):
-                        new_interval["type"] = i.get("type")
-                    new_interval_details.append(new_interval)
-            elif type in ["VirtualRide", "Ride"]:
-                for i in interval_details:
-                    new_interval = {}
-                    if i.get("distance"):
-                        new_interval["distance"] = meters_to_miles(i.get("distance"))
-                    if i.get("elapsed_time"):
-                        new_interval["duration"] = seconds_to_hhmmss(
-                            i.get("elapsed_time")
-                        )
-                    if i.get("average_watts"):
-                        new_interval["average_watts"] = i.get("average_watts")
-                    if i.get("decoupling"):
-                        new_interval["decoupling"] = i.get("decoupling")
-                    if i.get("zone"):
-                        new_interval["zone"] = i.get("zone")
-                    if i.get("average_speed"):
-                        new_interval["average_speed"] = mps_to_mph(
-                            i.get("average_speed")
-                        )
-                    if i.get("average_heartrate"):
-                        new_interval["average_heartrate"] = i.get("average_heartrate")
-                    if i.get("type"):
-                        new_interval["type"] = i.get("type")
-                    new_interval_details.append(new_interval)
-            activity_data["interval_details"] = new_interval_details
+        # process intervals data, except for races.
+        # in the future, autolap intervals
+        if activity_data.get("race") is True:
+            activity_data["interval_summary"] = None
+        else:
+            interval_details = api_get_activity_intervals(a.get("id")).get(
+                "icu_intervals"
+            )
+            if interval_details:
+                new_interval_details = []
+                if type == "Swim":
+                    for i in interval_details:
+                        new_interval = {}
+                        if i.get("distance"):
+                            new_interval["distance"] = meters_to_yards(
+                                i.get("distance")
+                            )
+                        if i.get("elapsed_time"):
+                            new_interval["duration"] = seconds_to_hhmmss(
+                                i.get("elapsed_time")
+                            )
+                        if i.get("zone"):
+                            new_interval["zone"] = i.get("zone")
+                        if i.get("average_speed"):
+                            new_interval["average_speed"] = mps_to_min_per_100yds(
+                                i.get("average_speed")
+                            )
+                        if i.get("average_heartrate"):
+                            new_interval["average_heartrate"] = i.get(
+                                "average_heartrate"
+                            )
+                        if i.get("type"):
+                            new_interval["type"] = i.get("type")
+                        new_interval_details.append(new_interval)
+                elif type in ["Run", "VirtualRun"]:
+                    for i in interval_details:
+                        new_interval = {}
+                        if i.get("distance"):
+                            new_interval["distance"] = meters_to_miles(
+                                i.get("distance")
+                            )
+                        if i.get("elapsed_time"):
+                            new_interval["duration"] = seconds_to_hhmmss(
+                                i.get("elapsed_time")
+                            )
+                        if i.get("zone"):
+                            new_interval["zone"] = i.get("zone")
+                        if i.get("average_speed"):
+                            new_interval["average_speed"] = mps_to_min_per_mile(
+                                i.get("average_speed")
+                            )
+                        if i.get("gap"):
+                            new_interval["grade_adjusted_speed"] = mps_to_min_per_mile(
+                                i.get("gap")
+                            )
+                        if i.get("average_heartrate"):
+                            new_interval["average_heartrate"] = i.get(
+                                "average_heartrate"
+                            )
+                        if i.get("type"):
+                            new_interval["type"] = i.get("type")
+                        new_interval_details.append(new_interval)
+                elif type in ["VirtualRide", "Ride"]:
+                    for i in interval_details:
+                        new_interval = {}
+                        if i.get("distance"):
+                            new_interval["distance"] = meters_to_miles(
+                                i.get("distance")
+                            )
+                        if i.get("elapsed_time"):
+                            new_interval["duration"] = seconds_to_hhmmss(
+                                i.get("elapsed_time")
+                            )
+                        if i.get("average_watts"):
+                            new_interval["average_watts"] = i.get("average_watts")
+                        if i.get("decoupling"):
+                            new_interval["decoupling"] = i.get("decoupling")
+                        if i.get("zone"):
+                            new_interval["zone"] = i.get("zone")
+                        if i.get("average_speed"):
+                            new_interval["average_speed"] = mps_to_mph(
+                                i.get("average_speed")
+                            )
+                        if i.get("average_heartrate"):
+                            new_interval["average_heartrate"] = i.get(
+                                "average_heartrate"
+                            )
+                        if i.get("type"):
+                            new_interval["type"] = i.get("type")
+                        new_interval_details.append(new_interval)
+                activity_data["interval_details"] = new_interval_details
 
         # append activity data to the correct date
         data[date]["activities"].append(activity_data)
