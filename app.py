@@ -105,7 +105,7 @@ def respond(message, history, window):
     reply = ""
     with client.messages.stream(
         model="claude-opus-4-6",
-        max_tokens=16384,
+        max_tokens=32768,
         system=SYSTEM_PROMPT,
         messages=messages,
     ) as stream:
