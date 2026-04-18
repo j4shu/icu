@@ -222,6 +222,8 @@ def get_athlete():
 def get_events():
     oldest, newest = get_date_bounds(past=180, future=180)
     response = api_get_athlete("events", params={"oldest": oldest, "newest": newest})
+    today = datetime.now().strftime("%Y-%m-%d")
+
     # filter for races only
     data = [
         {
@@ -230,6 +232,7 @@ def get_events():
             "category": e.get("category"),
             "type": (e.get("type") if e.get("type") != "Other" else "Triathlon"),
             "description": e.get("description"),
+            **({"completed": True} if today >= e.get("start_date_local")[:10] else {}),
         }
         for e in response
         if e.get("category").startswith("RACE")
