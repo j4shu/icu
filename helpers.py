@@ -39,11 +39,7 @@ def get_date_range(past):
 
 def strip_empty(o):
     if isinstance(o, dict):
-        return {
-            k: strip_empty(v)
-            for k, v in o.items()
-            if v not in (None, True, False, 0.0, [])
-        }
+        return {k: strip_empty(v) for k, v in o.items() if v not in (None, 0.0, [])}
     if isinstance(o, list):
         return [strip_empty(i) for i in o]
     return o
@@ -65,6 +61,10 @@ def meters_to_yards(m):
     return f"{rounded}yd"
 
 
+def meters_to_feet(m):
+    return f"{round(m * 3.28084, 2)}ft"
+
+
 def mps_to_mph(mps):
     return f"{round(mps * 2.23694, 2)}mph"
 
@@ -79,6 +79,10 @@ def mps_to_min_per_100yds(mps):
     total_secs = (100 * 0.9144) / mps
     m, s = divmod(int(total_secs), 60)
     return f"{m}:{s:02d}/100yd"
+
+
+def celsius_to_fahrenheit(c):
+    return f"{round(c * 9/5 + 32, 2)}F"
 
 
 # "interval_summary": [

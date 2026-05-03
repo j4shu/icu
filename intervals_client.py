@@ -40,6 +40,7 @@ def get_activities(oldest, newest):
             # Duration & distance
             "duration": seconds_to_hhmmss(a.get("moving_time", a.get("elapsed_time"))),
             "distance": a.get("distance"),
+            "elevation_gain": a.get("total_elevation_gain"),
             # Training load & fitness
             "training_load": a.get("icu_training_load"),
             "intensity": a.get("icu_intensity"),
@@ -64,8 +65,9 @@ def get_activities(oldest, newest):
             "average_speed": a.get("average_speed"),
             "grade_adjusted_speed": a.get("gap"),
             "average_cadence": a.get("average_cadence"),
-            # Workout structure
-            "interval_summary": a.get("interval_summary"),
+            # Misc
+            # "interval_summary": a.get("interval_summary"),
+            "average_temp": a.get("average_temp"),
         }
 
         # process activity specific fields
@@ -75,14 +77,17 @@ def get_activities(oldest, newest):
             activity_data["average_speed"] = mps_to_min_per_100yds(
                 activity_data.get("average_speed")
             )
-            activity_data["interval_summary"] = parse_swim_interval_summary(
-                activity_data.get("interval_summary")
-            )
+            # activity_data["interval_summary"] = parse_swim_interval_summary(
+            # activity_data.get("interval_summary")
+            # )
         elif type in ["Run", "VirtualRun"]:
             activity_data["average_speed"] = mps_to_min_per_mile(
                 activity_data.get("average_speed")
             )
-            activity_data["grade_adjusted_speed"] = mps_to_min_per_mile(a.get("gap"))
+            if a.get("gap"):
+                activity_data["grade_adjusted_speed"] = mps_to_min_per_mile(
+                    a.get("gap")
+                )
             activity_data["distance"] = meters_to_miles(activity_data.get("distance"))
         elif type in ["VirtualRide", "Ride"]:
             activity_data["distance"] = meters_to_miles(activity_data.get("distance"))
@@ -90,11 +95,18 @@ def get_activities(oldest, newest):
                 activity_data.get("average_speed")
             )
 
-        # process intervals data, except for races.
-        # in the future, autolap intervals
-        if activity_data.get("race") is True:
-            activity_data["interval_summary"] = None
-        else:
+        # fields that can be None that require unit conversion (if they exist)
+        if activity_data.get("elevation_gain"):
+            activity_data["elevation_gain"] = meters_to_feet(
+                activity_data.get("elevation_gain")
+            )
+        if activity_data.get("average_temp"):
+            activity_data["average_temp"] = celsius_to_fahrenheit(
+                activity_data.get("average_temp")
+            )
+
+        # process intervals data, except for races. TODO: in the future, autolap intervals
+        if not a.get("race"):
             interval_details = api_get_activity_intervals(a.get("id")).get(
                 "icu_intervals"
             )
