@@ -42,10 +42,10 @@ WINDOW_CHOICES = [
 ]
 
 EXAMPLES = [
+    [
+        "Analyze on my current training plan by comparing it to my recent training data. Should I make any adjustments?"
+    ],
     ["Create a training plan up until my next race based on my recent training data."],
-    ["Give me a summary of my recent training and key areas to improve."],
-    ["How has my training load been trending? Am I at risk of overtraining?"],
-    ["Break down my swim/bike/run volume distribution. Is it balanced?"],
 ]
 
 

@@ -58,7 +58,7 @@ def get_activities(oldest, newest):
             "normalized_power": a.get("icu_weighted_avg_watts"),
             "athlete_ftp": a.get("icu_ftp"),
             # "time_in_zones": a.get("icu_zone_times"),
-            "decoupling": a.get("decoupling"),
+            # "decoupling": a.get("decoupling"),
             "efficiency_factor": a.get("icu_efficiency_factor"),
             "strain_score": a.get("strain_score"),
             # Pace & form
