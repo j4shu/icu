@@ -81,4 +81,4 @@ Build a periodized training plan the athlete follows from the closest upcoming M
 
 9. **Name and write.** Run `date "+%Y-%m-%d-%H%M"`; the path is `training-plans/<that-timestamp>-training-plan.md`. Never overwrite or modify an existing file. Output the absolute file path.
 
-10. **Summarize in chat** (plain text — no emojis): target race and runway, phase progression, CTL/TSB trajectory and race-morning TSB target, taper length, any edge cases handled or assumptions/estimates made, any argument clamp, and the absolute file path.
+10. **Summarize in chat** (plain text — no emojis): target race and runway, phase progression, CTL/TSB trajectory and race-morning TSB target, taper length, any edge cases handled or assumptions/estimates made, and the absolute file path.
