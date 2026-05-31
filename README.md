@@ -67,16 +67,6 @@ Each command saves its result as a dated markdown file (named with the date and 
 
 Your existing `training_plan.md` is never overwritten unless you explicitly ask.
 
-### Training plan structure
-
-`/create-training-plan` builds a periodized plan (base → build → peak → taper) and, rather than scheduling each day, lists the target workouts for each week so you can arrange them around how you feel. Every week includes:
-
-- 2 key/hard bike sessions and 2 key/hard run sessions (a brick can count toward these)
-- 1 strength session
-- 2 swim sessions
-- 1 rest day
-- the rest filled with long Z2 bikes or runs
-
 ## Inspecting the data
 
 To see the raw data Claude works with:
