@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run python triclops.py:*)",
+      "Bash(date:*)",
+      "Read",
+      "Write",
+      "Glob"
+    ]
+  }
+}

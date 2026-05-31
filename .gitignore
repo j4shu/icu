@@ -2,7 +2,8 @@
 __pycache__/
 .env
 *.pyc
-conversations/
+training-plans/
+training-analyses/
+nutrition/
 .athlete
-training_plan.md
 .cache/

@@ -249,7 +249,7 @@ def get_events():
         for e in response
         if e.get("category").startswith("RACE")
     ]
-    data.sort(key=lambda x: x.get("date"))
+    data.sort(key=lambda x: x.get("date"), reverse=True)
     return data
 
 
