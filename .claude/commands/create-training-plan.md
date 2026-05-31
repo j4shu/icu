@@ -4,20 +4,13 @@ argument-hint: "[days=42]"
 allowed-tools: Bash(uv run python triclops.py:*), Bash(date:*), Read, Write, Glob
 ---
 
-Build a periodized training plan the athlete follows from the closest upcoming Monday until their next race. `$ARGUMENTS` may give a history window in days: parse the first integer, clamp to `[14, 180]`, default `42` if absent/zero/negative; note any clamp in the chat summary. Ignore other text for windowing, but if it names a race, use it to disambiguate the target in step 2. Use only fields defined in the **fetch-training-data** skill `schema.md`; if a referenced field is missing for this athlete, fall back as described below — never assume a default or invent a value. Do **not** read any existing training plans under `training-plans/` as a template or reference.
-
-**Workout shorthand**:
-
-- `WU`/`CD` = warm-up/cool-down; `Z2` = easy aerobic; `SS` = sweet spot; `VO2` = VO2max. Intervals as `<reps>×<duration-or-distance> @ <target> w/ <recovery>` (e.g. `3×8min @ 175–185 W w/ 4min easy spin`, `5×800m @ 8:10–8:25/mi w/ 2min jog`).
-- Targets from the athlete's own data: bike in **W** (and/or HR), run in **M:SS/mi** (and/or HR), swim in **M:SS/100yd** with rest. Degrade gracefully: power→HR→RPE 1–10 (bike), pace→HR→RPE (run). End each line with a rough **total** (`~60min`/`~4 mi`); mark estimates with `~`.
+Build a periodized training plan the athlete follows from the closest upcoming Monday until their next race. By default, use a 42-day history window to assess fitness and recent training load unless otherwise specified in `$ARGUMENTS`. Use only fields defined in the **fetch-training-data** skill `schema.md`; if a referenced field is missing for this athlete, fall back as described below — never assume a default or invent a value. Do **not** read any existing training plans under `training-plans/` as a template or reference.
 
 1. **Fetch data** via the **fetch-training-data** skill (values are already display-ready — do not convert): run `uv run python triclops.py summary --days <N>` and `uv run python triclops.py athlete`; read both. `summary` already includes the `events` array, so no separate `events` call is needed. If either errors or returns no `dates`, report the CLI's actual `Error: ...` (stderr) verbatim, stop, and do not fabricate data (common causes: missing `INTERVALS_API_KEY` in `.env`, or a missing `.athlete` file).
 
 2. **Select the target race** from `events` (ignore `completed: true` events; absent `completed` = upcoming):
    - If `$ARGUMENTS` named a race, match it. Else pick the next uncompleted event by `date`, preferring `RACE_A` > `RACE_B` > `RACE_C`. Read distances and `type` from the event `description`/`type`.
    - **No upcoming race:** do not invent one — ask the athlete for race name, date, type, and distances, then continue.
-   - **Single-sport race** (`type` Run/Swim/Bike): build KEY sessions and Race Day around that sport only; demote the other disciplines to optional cross-training/maintenance (no brick, no mandated swims).
-   - If distances are unclear, infer from `type`/`name` and **state the assumption**; if you truly cannot tell, ask.
 
 3. **Compute runway and phase shape.** Get today's date with `date "+%Y-%m-%d"` (never assume it). **Week 1 starts with the closest upcoming Monday on or after today's date**, number forward in 7-day blocks, final partial week is the taper/race week ending race day; let `W` = total weeks. If runway > 10 weeks and `N < 90`, re-run `summary --days 90` (up to 180) and re-read before periodizing — but an explicit user-supplied window always wins. Pick the shape and state it in one line:
 
@@ -50,25 +43,42 @@ Build a periodized training plan the athlete follows from the closest upcoming M
    - **Swim** (anchor recent swim `average_speed`, M:SS/100yd): threshold + easy pace.
    - **Missing benchmarks:** never invent a number. No FTP → prescribe bike by HR/RPE. No run threshold → derive from recent `average_speed` + `lthr`/`hr_zones`, else RPE. No HR zones → RPE + pace. No swim threshold → estimate from recent swim `average_speed`, else by feel. Mark estimates with `~`, state the assumption, and recommend an early benchmark test (e.g. 20-min FTP or run threshold effort).
 
-7. **Set the weekly session framework for Base/Build/Peak**, then vary content by phase (keep counts stable; vary content):
-   - **2 KEY sessions** — one bike-quality (SS/threshold/VO2) and one run-quality (tempo/hill/interval/race-pace). A **brick** workout also satisfies as one of the KEY sessions.
+7. **Create the weekly session framework for Base/Build/Peak**, then vary content by phase (keep counts stable; vary content):
+   - **2 KEY sessions**: 1 bike-quality (SS/threshold/VO2) and 1 run-quality (tempo/hill/interval/race-pace). A **brick** workout (bike immediately into run) also satisfies as one of the KEY sessions.
      - Can include an optional/additional quality session with a skip condition depending on the phase.
-   - **2 swims** (technique/aerobic in base, race-pace nearer the race).
+   - **2 swims**: technique/aerobic in base, race-pace efforts nearer the race.
+     - Keep swim main sets interesting instead of just 1 long set, unless the workout is specifically targeting swim endurance. Examples:
+       - Broken Ladder: 100, 4x25 desc, 200, 4x50 desc, 300, 4x75 desc, 400, 4x100 desc
+       - Broken Long Swim: 3x(300, 4x75), 200 easy pull/drill between rounds
+       - Up–Down Ladder with Short Speed Pops: 100/200/300/400/300/200/100, 2x25 fast/easy between each
+       - Descending Distance/Ascending Intensity: 400/300/200/100, 4x50 FAST
+       - Mini Main Sets: 4x(200 steady, 4x50 (odd fast / even slow))
+       - 100 repeats: 10x100, varying pace by round or all the same
+       - Endurance: 2x800, or 1600 straight
+       - Consider variations of all of the above with different distances, rest, patterns, intensity, etc. depending on the current phase.
    - **1 strength** (full-body, ≥48h from any KEY/quality or long-Z2 day; in Build/Peak bias to lower load or place it after a quality day, not before; light/activation in taper).
    - **1 full rest day.**
    - Fill remaining time with **long Z2 bike/run.**
    - **By phase:** Base = sub-max keys, more Z2; Build = keys at threshold, hold Z2; Peak = optional 2nd bike-quality or race-pace brick, trim Z2; Taper = cut volume ~40–55%, keep frequency + short snappy intensity.
    - **Override:** Recovery/Reload and deep-taper weeks override this frame — at most one short quality touch (zero in true post-long-course recovery), easy frequency only. Never prescribe more sessions/sport than the athlete has recently sustained; scale down and note it.
+   - **Workout shorthand**:
+     - `WU`/`CD` = warm-up/cool-down; `Z2` = easy aerobic; `SS` = sweet spot; `VO2` = VO2max. Intervals as `<reps>x<duration-or-distance> @ <target> w/ <recovery>` (e.g. `3x8min @ 175–185 W w/ 4min easy spin`, `5x800m @ 8:10–8:25/mi w/ 2min jog`).
+     - Targets from the athlete's own data: bike in **W** (and/or HR), run in **M:SS/mi** (and/or HR), swim in **M:SS/100yd** with rest. Degrade gracefully: power→HR→RPE 1–10 (bike), pace→HR→RPE (run). End each line with a rough **total** (`~60min`/`~4 mi`); mark estimates with `~`.
 
-8. **Write the file with these sections in this exact order** (the proven house format — by week, NOT by day):
-   - **Title + header:** `# Training Plan: <Race Name> on <YYYY-MM-DD>` (no real race → `# Training Plan: Base/Build Block (no scheduled race)`), then athlete (name, age/sex, weight from `athlete`), race (type + distances), plan window (closest upcoming Monday → race, `W` weeks), priority.
-   - **`## Starting point (as of <closest upcoming Monday>)`** — fitness/fatigue (CTL/ATL/TSB), context (incl. just-raced / fatigue notes), benchmarks (mark missing/estimated), and the primary limiter.
-   - **`## Reference paces & powers`** — bike / run / swim blocks from step 6.
-   - **One `## Week N: <Phase label> (<date range>)` per week:** a one-line **Goal**, a short **Rationale** (target CTL/TSB, intent), then a **numbered** workout list (not bound to weekdays), **KEY sessions first**, each labeled (`🔴 KEY — Bike: SS 3×8`, `🟠` for optional/additional quality with a skip condition, `Swim (technique)`, `Long Run — Z2`, `Rest day`) and prescribed with the shorthand above.
-   - **`### 🏁 Race Day — <weekday, date>`** (when a real race exists) — warm-up, then per-discipline pacing in race order (swim → bike → run for a tri, or the single sport) using the reference paces — concrete targets, not platitudes.
-   - **`### Weekly structure at a glance`** — table (`Week | Phase | Key bike | Key run | Strength | Swim | Long Z2 | Rest`) plus a one-paragraph **Periodization** note on how intensity rises and volume tapers.
-   - **Runways < 1 week:** replace the per-week sections and the at-a-glance table with a single day-by-day countdown to race day; Starting point, Reference paces & powers, and Race Day still apply.
+8. **Write the file with these sections in this exact order** (by week, NOT by day):
+   - First Section (General Info)
+     - **Title + header:** `# Training Plan: <Race Name> on <YYYY-MM-DD>` (no real race → `# Training Plan: Base/Build Block (no scheduled race)`), then athlete (name, age/sex, weight from `athlete`), race (type + distances), plan window (closest upcoming Monday → race, `W` weeks), priority.
+     - **`## Starting point (as of <closest upcoming Monday>)`** — fitness/fatigue (CTL/ATL/TSB), context (incl. just-raced / fatigue notes), benchmarks (mark missing/estimated), and the primary limiter.
+     - **`## Reference paces & powers`** — bike / run / swim blocks from step 6.
+   - Main Section (Weekly Plans)
+     - **One `## Week N: <Phase label> (<date range>)` per week:** a one-line **Goal**, a short **Rationale** (target CTL/TSB, intent), then a **numbered** workout list (not bound to weekdays), **KEY sessions first**, each labeled (`🔴 KEY — Bike: SS 3x8`, `🟠` for optional/additional quality with a skip condition, `Swim (technique)`, `Long Run — Z2`, `Rest day`) and prescribed with the shorthand above.
+     - Do **NOT** prescribe workouts for specific weekdays (e.g. "Monday: ..."). Let the athlete choose which days to do them based on their schedule and how they feel. You can note general guidelines, such as spacing out certain sessions or putting them earlier/later in the week depending on the phase (e.g. do last quality sessions days before a race, don't do quality sessions right after a race), but do not assign workouts to specific days.
+   - Last Section (Race Info and Summary)
+     - **`### 🏁 Race Day — <weekday, date>`** (when a real race exists) — warm-up, then per-discipline pacing in race order (swim → bike → run for a tri, or the single sport) using the reference paces — concrete targets, not platitudes.
+     - **`### Weekly structure at a glance`** — table (`Week | Phase | Key bike | Key run | Strength | Swim | Long Z2 | Rest`) plus a one-paragraph **Periodization** note on how intensity rises and volume tapers.
+     - **Runways < 1 week:** replace the per-week sections and the at-a-glance table with a single day-by-day countdown to race day; Starting point, Reference paces & powers, and Race Day still apply.
+   - **IMPORTANT:** Separate each section (First, Main, and Last) with explicit page breaks such as with `<div style="page-break-after: always;"></div>` so that when the plan is printed, the sections are visually separated and start on new pages. **Additionally, for the "Main Section (Weekly Plans)" section, ensure that each week within this section also starts on new pages.**
 
-9. **Name and write.** Run `date "+%Y-%m-%d-%H%M"`; the path is `training-plans/<that-timestamp>-training-plan.md`. Never overwrite or modify an existing file.
+9. **Name and write.** Run `date "+%Y-%m-%d-%H%M"`; the path is `training-plans/<that-timestamp>-training-plan.md`. Never overwrite or modify an existing file. Output the absolute file path.
 
 10. **Summarize in chat** (plain text — no emojis): target race and runway, phase progression, CTL/TSB trajectory and race-morning TSB target, taper length, any edge cases handled or assumptions/estimates made, any argument clamp, and the absolute file path.
