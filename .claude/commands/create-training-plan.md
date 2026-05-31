@@ -53,7 +53,7 @@ Build a periodized training plan the athlete follows from the closest upcoming M
 7. **Set the weekly session framework for Base/Build/Peak**, then vary content by phase (keep counts stable; vary content):
    - **2 KEY sessions** — one bike-quality (SS/threshold/VO2) and one run-quality (tempo/hill/interval/race-pace). A **brick** workout also satisfies as one of the KEY sessions.
      - Can include an optional/additional quality session with a skip condition depending on the phase.
-   - **2 swims** (technique/aerobic in base, race-pace nearer the race; maintenance only for a trivial swim leg).
+   - **2 swims** (technique/aerobic in base, race-pace nearer the race).
    - **1 strength** (full-body, ≥48h from any KEY/quality or long-Z2 day; in Build/Peak bias to lower load or place it after a quality day, not before; light/activation in taper).
    - **1 full rest day.**
    - Fill remaining time with **long Z2 bike/run.**
