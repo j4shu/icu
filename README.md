@@ -65,8 +65,6 @@ Each command saves its result as a dated markdown file (named with the date and 
 | Training analyses | `training-analyses/` |
 | Nutrition guides  | `nutrition/`         |
 
-Your existing `training_plan.md` is never overwritten unless you explicitly ask.
-
 ## Inspecting the data
 
 To see the raw data Claude works with:

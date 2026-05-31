@@ -28,26 +28,3 @@ uv run python triclops.py athlete              # athlete profile (weight, age, e
 ```
 
 Default to a 42-day window unless the task or athlete specifies otherwise. See the skill's `schema.md` for what every field means and what units it's already in.
-
-## Workout notation
-
-Generated plans and workouts use the markdown format established in `training_plan.md`:
-
-- `# Training Plan: <title> on <date>`
-- `## Week N: <name> (<date range>)`
-- `### <Weekday M/D>` per day
-- `- **Swim/Bike/Run:** <prescription>` using `WU` (warm-up) / `CD` (cool-down), `NxDIST at PACE w/ Xs rest`, and explicit HR / power / pace targets
-- `- Total: <distance>` for swims
-- `- **Bike + Run:** ...` for brick sessions
-
-Match the athlete's units: yards & `M:SS/100yd` for swims, miles & `M:SS/mi` for runs, miles & watts (or % FTP) for bikes.
-
-## Output conventions
-
-Save each artifact as its own markdown file, in its own directory, named with the current date and time from `date "+%Y-%m-%d-%H%M"` (e.g. `2026-05-31-0925`). Use **dashes, not underscores**, in directory and file names. **Never overwrite `training_plan.md` unless explicitly asked.**
-
-- Training plans → `training-plans/<YYYY-MM-DD-HHMM>-<race-slug>.md`
-- Training analyses → `training-analyses/<YYYY-MM-DD-HHMM>.md`
-- Nutrition guides → `nutrition/<YYYY-MM-DD-HHMM>-<race-slug>.md`
-
-Before modifying an existing plan, read the most recent file in `training-plans/` (fall back to `training_plan.md`) so changes stay consistent.

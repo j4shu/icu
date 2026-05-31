@@ -13,4 +13,4 @@ Build a nutrition and hydration plan for a race. Arguments (`$ARGUMENTS`) may na
    - **Race week / morning** — carb loading, the pre-race meal, and timing.
    - **During the race** — per-discipline fueling and hydration across the swim → bike → run sequence, with concrete amounts and timing (e.g. g carbs/hr, ml fluid/hr, when to take gels).
    - **Recovery** — immediate post-race refueling.
-5. Run `date "+%Y-%m-%d-%H%M"` (e.g. `2026-05-31-0925`) and write the plan to `nutrition/<that-timestamp>-<race-slug>.md` (use dashes in the race slug), then summarize the key targets in chat.
+5. Run `date "+%Y-%m-%d-%H%M"` (e.g. `2026-05-31-0925`) and write the plan to `nutrition/<that-timestamp>-nutrition.md`, then summarize the key targets in chat.
