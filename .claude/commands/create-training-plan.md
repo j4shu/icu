@@ -55,7 +55,7 @@ Build a periodized training plan the athlete follows from the closest upcoming M
        - Mini Main Sets: 4x(200 steady, 4x50 (odd fast / even slow))
        - 100 repeats: 10x100, varying pace by round or all the same
        - Endurance: 2x800, or 1600 straight
-       - Consider variations of all of the above with different distances, rest, patterns, intensity, etc. depending on the current phase.
+       - Consider variations of all of the above with different distances, rest, patterns, intensity, etc. depending on the phase.
    - **1 strength** (full-body, ≥48h from any KEY/quality or long-Z2 day; in Build/Peak bias to lower load or place it after a quality day, not before; light/activation in taper).
    - **1 full rest day.**
    - Fill remaining time with **long Z2 bike/run.**
@@ -64,6 +64,7 @@ Build a periodized training plan the athlete follows from the closest upcoming M
    - **Workout shorthand**:
      - `WU`/`CD` = warm-up/cool-down; `Z2` = easy aerobic; `SS` = sweet spot; `VO2` = VO2max. Intervals as `<reps>x<duration-or-distance> @ <target> w/ <recovery>` (e.g. `3x8min @ 175–185 W w/ 4min easy spin`, `5x800m @ 8:10–8:25/mi w/ 2min jog`).
      - Targets from the athlete's own data: bike in **W** (and/or HR), run in **M:SS/mi** (and/or HR), swim in **M:SS/100yd** with rest. Degrade gracefully: power→HR→RPE 1–10 (bike), pace→HR→RPE (run). End each line with a rough **total** (`~60min`/`~4 mi`); mark estimates with `~`.
+     - Do **not** use symbols like `×` (Unicode `\u00d7`) in workout or set descriptions — use letters as much as possible (e.g. `x`).
 
 8. **Write the file with these sections in this exact order** (by week, NOT by day):
    - First Section (General Info)
