@@ -1,17 +1,69 @@
 ---
-description: Analyze recent training data against the plan and flag adjustments.
+description: Analyze recent training against the current plan as the coach, then turn it into a prioritized, dated action list with an explicit keep/tweak/regenerate verdict.
 argument-hint: "[days=42]"
 allowed-tools: Bash(uv run python triclops.py:*), Bash(date:*), Read, Write, Glob
 ---
 
-Analyze the athlete's recent training. Arguments (`$ARGUMENTS`) may give a lookback window in days — if none is given, use 42.
+Analyze the athlete's recent training as their coach and turn it into decisions. This is a **decision engine**, not a report: every observation must close into a concrete, dated, numbers-specific action. The athlete should finish knowing what to do differently this week and next, whether any red flag means back off now, and whether their plan still fits. Use only fields defined in the **fetch-training-data** skill `schema.md`; values are already display-ready — **never convert units**. A missing field means "no data," not zero (empty/zero/null fields are stripped before output) — never treat an absent field as a real value. Never fabricate or assume a number; where a field is missing, degrade gracefully as specified, or say the data is insufficient and name what would help. Mark every estimate with a leading `~` and state the assumption.
 
-1. Fetch the data: run `uv run python triclops.py summary --days <N>` and read the JSON (use the **fetch-training-data** skill; see its `schema.md` for field meanings).
-2. Find the current plan: use Glob to locate the most recent file in `training-plans/`. If none exists, note that and analyze the data without plan comparison.
-3. Analyze, as the coach:
-   - CTL/ATL/TSB trend — is fitness building, holding, or decaying? Is the athlete fresh or buried?
-   - Volume & intensity distribution by sport (swim/bike/run) over the window.
-   - Recovery markers: HRV, resting HR, sleep, and ramp rate — any red flags?
-   - If a plan exists, compare prescribed vs. actual and call out adherence gaps.
-4. Give **concrete, numbers-and-dates-specific** adjustments. Be honest about overtraining or insufficient volume.
-5. Run `date "+%Y-%m-%d-%H%M"` (e.g. `2026-05-31-0925`) and write the file to `training-analyses/<that-timestamp>-training-analysis.md`.
+1. **Pick the window `N`.** `$ARGUMENTS` may give a lookback in days. If none: `7` = acute check-in ("am I recovered / how was this week?"), **`42` = default trend** (CTL/ATL/TSB + weekly rhythm), `90`–`180` = long-term progression. Default to **42**.
+
+2. **Fetch the data** via the **fetch-training-data** skill (display-ready — do not convert): run `uv run python triclops.py summary --days <N>` and read the JSON; also run `uv run python triclops.py athlete` for name/age/sex/weight context. `summary` already includes the `events` array, so no separate `events` call is needed.
+   - **On any failure, stop.** If a command errors or `summary` returns no `dates`, report the CLI's actual `Error: ...` (stderr) text **verbatim**, then stop — do not fabricate, infer, or analyze around the gap. Common causes: missing `INTERVALS_API_KEY` in `.env`, or a missing `.athlete` file (copy `.athlete.example`). If you suspect stale cache (an activity was just edited on Intervals.icu), re-run with `--force`.
+
+3. **Get today's date.** Run `date "+%Y-%m-%d"` — never assume it. Use it to anchor "current vs. ~N days ago" comparisons, judge plan staleness and race proximity, and detect "just raced."
+
+4. **Locate and qualify the current plan.** Use Glob over `training-plans/` and read the **most recent** file (filenames lead with `YYYY-MM-DD-HHMM`, newest wins). Read the plan window and race date from the plan's header line (plan window: closest upcoming Monday → race) and the `### 🏁 Race Day` heading; if those are absent, fall back to the first/last `## Week N (<date range>)`. Classify it — never silently assume it still applies; the classification feeds the verdict in step 9:
+   - **None** — no file exists. Analyze the data on its own; plan-vs-actual is unavailable.
+   - **Active & matching** — race upcoming and today falls inside the plan window. Note its target race + date, current phase/Goal, and the prescribed KEY sessions and zones/durations. Proceed to full prescribed-vs-actual (step 8).
+   - **Stale** — today is past the plan's race day / final week, or it predates the window and looks abandoned. Analyze on the data alone; lean toward REGENERATE.
+   - **Changed race** — cross-check the plan's race against `events`: its target is `completed: true`, no longer appears, or the next uncompleted event differs in name/date/type/distances. (Select the next uncompleted event by `date`, preferring `RACE_A` > `RACE_B` > `RACE_C` to break ties.) This forces REGENERATE.
+   - **Assumptions broken** — the plan's "Starting point" CTL/limiter no longer matches current data. Note the gap; it may force TWEAK or REGENERATE.
+
+5. **Expand the window if the analysis needs more history** (an explicit user window from step 1 always wins — never override it). Note any expansion in the output:
+   - **Data-driven:** if the most recent wellness reading in the window has no `ctl`/`atl`/`tsb`, or the window holds too few `activities` to read a trend (sparse/gappy history), re-run `summary --days 90` (up to 180) and re-read before continuing.
+   - **Plan-coverage:** if an Active & matching plan (step 4) starts before window `N`, expand `N` to cover the plan's start through today so prescribed-vs-actual is comparable, then re-read.
+   - If even 180 days lacks the fields needed for a confident read, say the data is insufficient and state exactly what is missing.
+
+6. **Read the data, as the coach — each finding as a TREND, with a "so what" attached.** Compare the latest value against the window start (or ~N days earlier); describe direction and rate, not just level. No observation stands alone — name its training consequence. Degrade gracefully where a field is absent (bike: power → HR → RPE; run/swim: pace → HR → RPE); a missing metric is "no data," never zero.
+   - **Form trajectory** — latest `ctl` (fitness), `atl` (fatigue), `tsb` (form: negative = loading/fatigued, positive = fresh/tapered), and `ramp_rate` (CTL change rate; high positive = injury/overtraining risk). State the CTL trend across the window (building / holding / decaying) with start→end numbers and dates, and the TSB regime (buried / productive loading / balanced / fresh / detraining-if-held). Say whether the current form is **explained by intent** (planned taper or overload block) or **unintended** (ramping too fast, or bleeding fitness when meaning to build). If these fields are absent, expand per step 5; if still absent, say the trend cannot be computed.
+   - **Volume & intensity by sport** — map every `type` to its sport: Swim/OpenWaterSwim → swim, Run/VirtualRun → run, Ride/VirtualRide → bike, and bucket any other endurance `type` by its discipline (note it). Per sport: session count, total `duration`/`distance`, and the easy-vs-hard split, reading intensity from whichever the activity actually has — `intensity` / `training_load` / `average_watts`+`normalized_power` → `average_heartrate` vs `hr_zones`/`lthr` → `average_speed`/`grade_adjusted_speed` → `strain_score`/RPE. Name the model (polarized ≈80/20 / threshold-heavy "grey-zone" fatigue trap / all-easy) and whether it fits the plan phase. Flag any sport gone dark or over-represented.
+   - **Key-session execution** — did the hard days hit the prescribed **stimulus** (zone/power/pace + duration), not just "did a session"? Use `interval_details` (`average_watts`/`average_speed`/`average_heartrate` vs `zone`/`type` WORK/RECOVERY) or activity-level `intensity`. For **bike** aerobic efficiency, where `efficiency_factor` (NP÷HR, bike-only) exists across comparable efforts, trend it (rising at equal load = improving fitness; falling = fatigue/heat — cross-check `average_temp`). For **run**, anchor efficiency on pace-at-HR (`average_speed`/`grade_adjusted_speed` vs `average_heartrate`) at comparable efforts. If efficiency can't be assessed, say a steady benchmark effort would enable it.
+   - **Recovery markers** — `hrv`, `resting_hr`, `sleep_hours`/`sleep_score`. Read as a trend (≥2 datapoints; with one value, call it a snapshot and say so). The **overtraining signature** is falling `hrv` + rising `resting_hr` + deeply negative `tsb` with high `ramp_rate` (referenced by name in step 9). Even the autonomic pair alone — `hrv` trending down while `resting_hr` climbs — is a real overreaching/illness signal and is never silent. Reconcile against load: rising fatigue markers in a planned overload may be acceptable; the same in an easy/taper week is a problem. If a recovery field is absent, say so and lean on what's present — never infer a value.
+
+7. **Compare prescribed vs. actual — by intent, not box-checking** (only for an Active & matching plan). Map the plan's current/most-recent week onto the activities in the window:
+   - Did the athlete hit the prescribed **stimulus** (right zone/power/pace + duration of each KEY session)? A `3x8 @ SS` done at Z2 missed its intent even if "done."
+   - Did weekly **load direction** match the plan's target (build vs. hold vs. taper, via `ctl`/`tsb` movement)?
+   - Distinguish **smart deviation** (autoregulated correctly — e.g. cut a key session while `hrv` was suppressed → reinforce it) from **drift** (load creep, skipped quality, missed long sessions → correct it). State the adherence gap in one or two sentences with dates and numbers.
+
+8. **Decide the plan verdict — exactly one of KEEP / TWEAK / REGENERATE, with the trigger stated:**
+   - **KEEP** — on track; adherence good and load/recovery trends match plan intent. Confirm what to keep doing.
+   - **TWEAK** — plan is fundamentally right but this week or next needs adjustment (ramp too hot, a sport lagging, a missed block to reabsorb, a recovery week to pull forward). Fixes go in step 10 — do **not** regenerate.
+   - **REGENERATE** — the plan no longer fits: target race completed/changed, plan stale, or starting-point assumptions broken beyond week-level tweaks. Recommend running **`/create-training-plan`** (name the race + date it should target) and **ask the athlete to confirm** before regenerating — never silently rebuild.
+
+9. **Red-flag escalation — severity-ranked, honest, and overriding.** Surface only what the data supports; for each, give the triggering fields/values and the required action. A STOP-level flag overrides plan adherence — say so plainly.
+   - **STOP / back off now** — the full overtraining signature (falling `hrv` + rising `resting_hr` + deeply negative `tsb` with high `ramp_rate`), a sharp single-session performance drop at normal/high HR, or signs of illness/injury. Action: prescribe specific easy/rest days and a recheck date.
+   - **Caution** — the autonomic pair alone (`hrv` trending down + `resting_hr` trending up, even when `tsb`/`ramp_rate` are only mild) → mandatory recheck date; ramping too fast (`ramp_rate` above the ~5–8% safe band, corroborated by week-over-week load growth where derivable — see below); chronic short/low-quality sleep; one sport carrying all the fatigue; or a long unplanned `tsb` slide.
+   - **Watch / undertraining** — `ctl` decaying, frequent skipped quality, or volume below what the upcoming race demands; name the consequence for race readiness.
+   - **Just-raced gate** (safety): treat the athlete as "just raced" only when a `race: true` activity or a `completed: true` event has a date within the distance-scaled recovery window relative to today (step 3) — prefer the dated `race: true` activity for recency. Scale recovery with race distance — sprint/super-sprint ≈ 2–3 easy days; Olympic ≈ 4–5; half/full ≈ 7–14+ days easy aerobic, no quality even if `tsb` looks fine (soft-tissue/immune recovery lags CTL/TSB). Do not read a post-race TSB rebound as "ready to train hard."
+   - If no flags: say so explicitly ("no red flags — trends are healthy") rather than staying silent.
+   - **Note on weekly load:** there is no weekly-load field; it is a derived sum of per-activity `training_load`, which may be partial if any activity in the week lacks it. Lean on `ramp_rate` (a real field) as the primary ramp signal and treat the summed-load % as corroborating; flag it `~estimated` when any activity is missing `training_load`.
+
+10. **Produce the prioritized adjustment list — the core deliverable.** Two ranked buckets, most important first. Every item is one line: **what to change → the data behind it → the concrete action** (specific sessions, targets in the athlete's own units / HR / RPE, and dates or day-offsets). Use the workout shorthand from `/create-training-plan` (`WU`/`CD`, `Z2`, `SS`, `VO2`; intervals as `<reps>x<duration-or-distance> @ <target> w/ <recovery>`; bike in **W** and/or HR, run in **M:SS/mi** and/or HR, swim in **M:SS/100yd**; degrade power→HR→RPE, pace→HR→RPE). If a needed benchmark is missing, recommend a test rather than inventing a number; mark any estimate with `~` and state the assumption.
+
+- **This week (now)** — immediate corrections: what to cut, add, move, or hold. STOP-level flags lead this list.
+- **Next week (and beyond)** — trajectory corrections: ramp adjustments, a recovery week to pull in, a lagging sport to rebuild, or what to retest.
+- If the verdict is REGENERATE, this list is the bridge ("do X this week, then regenerate the plan for <race> via `/create-training-plan`").
+
+11. **Write the analysis file** with these sections in this exact order, decisions leading. Use the athlete's real numbers throughout; where a metric is absent, say "no data" rather than guessing. Mark estimates with `~`.
+
+- **Title + header:** `# Training Analysis — <today's date>`, then a context line: athlete (name, age/sex, weight from `athlete`), window analyzed (`<N> days`, date range, and any expansion), and plan status (None / Active / Stale / Changed race / Assumptions broken, with the target race + date if any).
+- **`## Verdict`** — the plan verdict (KEEP / TWEAK / REGENERATE) and its trigger, up top, in one to two sentences.
+- **`## Red flags`** — severity-ranked per step 9, or "none — trends are healthy."
+- **`## This week`** and **`## Next week`** — the prioritized adjustment lists from step 10.
+- **`## What the data shows (as of <latest date with data>)`** — the supporting analysis from steps 6–7: a compact **dashboard table** of current vs. ~window-ago with direction (CTL, ATL, TSB, ramp_rate, resting_hr, hrv, latest sleep_score; mark no-data cells `—`), then a by-sport table (`Sport | Sessions | Time | Distance | Easy/Hard split`), then the form / intensity-model / efficiency / recovery / key-session reads and the plan-adherence gap (or why it's unavailable), each finding carrying its "so what."
+- **`## Data gaps`** — any missing fields, single-point "snapshots," or estimates (`~`) that limited the analysis, and the benchmark effort(s) that would resolve them.
+
+12. **Name and write.** Run `date "+%Y-%m-%d-%H%M"` (e.g. `2026-05-31-0925`); the path is `training-analyses/<that-timestamp>-training-analysis.md`. Never overwrite or modify an existing file. Output the absolute file path.
+
+13. **Summarize in chat** (plain text — no emojis): the plan verdict and its trigger, the single most important thing to change this week, any STOP/Caution flag, whether to regenerate the plan (and for which race), the window used and whether it was expanded, any estimates/assumptions (with `~`) or insufficient-data gaps, and the absolute file path. If you stopped on a CLI error, report only that verbatim error and the likely cause.
