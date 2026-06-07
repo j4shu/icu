@@ -105,8 +105,8 @@ def get_activities(oldest, newest):
                 activity_data.get("average_temp")
             )
 
-        # process intervals data, except for races. TODO: in the future, autolap intervals
-        if not a.get("race"):
+        # process intervals data, except for races and non-triathlon activities
+        if (not a.get("race") and type in ["Swim", "Run", "VirtualRun", "VirtualRide", "Ride"]):
             interval_details = api_get_activity_intervals(a.get("id")).get(
                 "icu_intervals"
             )
