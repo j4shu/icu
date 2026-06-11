@@ -34,7 +34,7 @@ Requires Python 3.14+, [uv](https://docs.astral.sh/uv/), and
 uv sync
 ```
 
-### Environment variable
+### Environment
 
 Copy the example and fill in your INTERVALS_API_KEY key:
 
@@ -55,7 +55,7 @@ reasoning):
 cp .athlete.example .athlete
 ```
 
-## Use
+## Usage
 
 Open this folder in Claude Code and run a command:
 
